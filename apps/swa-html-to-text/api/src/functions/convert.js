@@ -14,9 +14,13 @@ function fallbackConvert (html) {
 app.http('convert', {
   authLevel: 'anonymous',
   handler: async (request) => {
-    const htmlFromBody = request && request.body && typeof request.body.html === 'string'
-      ? request.body.html
-      : '';
+    let htmlFromBody = '';
+    try {
+      const jsonBody = await request.json();
+      htmlFromBody = jsonBody && typeof jsonBody.html === 'string' ? jsonBody.html : '';
+    } catch (error) {
+      htmlFromBody = '';
+    }
     const htmlFromQuery = request && request.query ? request.query.get('html') || '' : '';
     const html = htmlFromBody || htmlFromQuery;
 
