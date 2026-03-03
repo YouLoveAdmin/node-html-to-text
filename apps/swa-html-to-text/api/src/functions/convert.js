@@ -11,29 +11,34 @@ function fallbackConvert (html) {
     .trim();
 }
 
+async function getHtmlFromBody (request) {
+  try {
+    const rawBody = await request.text();
+    if (typeof rawBody !== 'string' || !rawBody.trim()) {
+      return '';
+    }
+
+    try {
+      const parsedBody = JSON.parse(rawBody);
+      if (parsedBody && typeof parsedBody.html === 'string') {
+        return parsedBody.html;
+      }
+      if (typeof parsedBody === 'string') {
+        return parsedBody;
+      }
+      return rawBody;
+    } catch (error) {
+      return rawBody;
+    }
+  } catch (error) {
+    return '';
+  }
+}
+
 app.http('convert', {
   authLevel: 'anonymous',
   handler: async (request) => {
-    let htmlFromBody = '';
-    try {
-      const rawBody = await request.text();
-      if (typeof rawBody === 'string' && rawBody.trim()) {
-        try {
-          const parsedBody = JSON.parse(rawBody);
-          if (parsedBody && typeof parsedBody.html === 'string') {
-            htmlFromBody = parsedBody.html;
-          } else if (typeof parsedBody === 'string') {
-            htmlFromBody = parsedBody;
-          } else {
-            htmlFromBody = rawBody;
-          }
-        } catch (error) {
-          htmlFromBody = rawBody;
-        }
-      }
-    } catch (error) {
-      htmlFromBody = '';
-    }
+    const htmlFromBody = await getHtmlFromBody(request);
     const htmlFromQuery = request && request.query ? request.query.get('html') || '' : '';
     const html = htmlFromBody || htmlFromQuery;
 
