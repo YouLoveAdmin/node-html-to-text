@@ -16,8 +16,21 @@ app.http('convert', {
   handler: async (request) => {
     let htmlFromBody = '';
     try {
-      const jsonBody = await request.json();
-      htmlFromBody = jsonBody && typeof jsonBody.html === 'string' ? jsonBody.html : '';
+      const rawBody = await request.text();
+      if (typeof rawBody === 'string' && rawBody.trim()) {
+        try {
+          const parsedBody = JSON.parse(rawBody);
+          if (parsedBody && typeof parsedBody.html === 'string') {
+            htmlFromBody = parsedBody.html;
+          } else if (typeof parsedBody === 'string') {
+            htmlFromBody = parsedBody;
+          } else {
+            htmlFromBody = rawBody;
+          }
+        } catch (error) {
+          htmlFromBody = rawBody;
+        }
+      }
     } catch (error) {
       htmlFromBody = '';
     }
