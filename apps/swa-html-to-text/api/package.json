@@ -3,9 +3,10 @@
   "private": true,
   "version": "1.0.0",
   "description": "Azure Functions API for HTML to text conversion",
-  "main": "index.js",
+  "main": "src/functions/*.js",
   "license": "MIT",
   "dependencies": {
+    "@azure/functions": "^4.5.0",
     "html-to-text": "^9.0.5"
   }
 }
