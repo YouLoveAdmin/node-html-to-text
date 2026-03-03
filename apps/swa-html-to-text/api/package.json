@@ -1,0 +1,11 @@
+{
+  "name": "swa-html-to-text-api",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Azure Functions API for HTML to text conversion",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "html-to-text": "^9.0.5"
+  }
+}

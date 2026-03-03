@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HTML to Text API Demo</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main>
+      <h1>HTML to Text</h1>
+      <p>Uses Azure Static Web Apps + Functions.</p>
+
+      <label for="htmlInput">HTML input</label>
+      <textarea id="htmlInput" rows="10"><h1>Hello</h1><p>This is <strong>sample</strong> HTML.</p></textarea>
+
+      <button id="convertBtn" type="button">Convert</button>
+
+      <label for="textOutput">Text output</label>
+      <pre id="textOutput"></pre>
+    </main>
+
+    <script src="/main.js" type="module"></script>
+  </body>
+</html>
