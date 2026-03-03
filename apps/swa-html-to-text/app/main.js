@@ -1,17 +1,17 @@
+/* global document */
+
 const htmlInput = document.getElementById('htmlInput');
 const textOutput = document.getElementById('textOutput');
 const convertBtn = document.getElementById('convertBtn');
 
-async function convertHtml() {
+async function convertHtml () {
   convertBtn.disabled = true;
   convertBtn.textContent = 'Converting...';
 
   try {
     const response = await fetch('/api/convert', {
       method: 'POST',
-      headers: {
-        'content-type': 'application/json'
-      },
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ html: htmlInput.value })
     });
 
