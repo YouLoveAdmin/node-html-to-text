@@ -11,55 +11,104 @@ function fallbackConvert (html) {
     .trim();
 }
 
-async function getHtmlFromBody (request) {
+function parseBooleanish (value, defaultValue) {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  if (typeof value === 'string') {
+    if (value.toLowerCase() === 'true') {
+      return true;
+    }
+    if (value.toLowerCase() === 'false') {
+      return false;
+    }
+  }
+  return defaultValue;
+}
+
+async function getPayloadFromBody (request) {
+  const payload = {
+    html: '',
+    hyperlink: true
+  };
+
   try {
     const rawBody = await request.text();
     if (typeof rawBody !== 'string' || !rawBody.trim()) {
-      return '';
+      return payload;
     }
 
     try {
       const parsedBody = JSON.parse(rawBody);
       if (parsedBody && typeof parsedBody.html === 'string') {
-        return parsedBody.html;
+        payload.html = parsedBody.html;
+      } else if (parsedBody && typeof parsedBody.body === 'string') {
+        payload.html = parsedBody.body;
+      } else if (typeof parsedBody === 'string') {
+        payload.html = parsedBody;
+      } else {
+        payload.html = rawBody;
       }
-      if (typeof parsedBody === 'string') {
-        return parsedBody;
+
+      if (parsedBody && typeof parsedBody === 'object') {
+        payload.hyperlink = parseBooleanish(parsedBody.hyperlink, true);
       }
-      return rawBody;
     } catch (error) {
-      return rawBody;
+      payload.html = rawBody;
     }
   } catch (error) {
-    return '';
+    return payload;
   }
+
+  return payload;
+}
+
+function getPayloadFromQuery (request) {
+  const query = request && request.query ? request.query : null;
+  return {
+    html: query ? query.get('html') || query.get('body') || '' : '',
+    hyperlink: parseBooleanish(query ? query.get('hyperlink') : undefined, true)
+  };
+}
+
+function convertWithOptions (html, keepHyperlink) {
+  try {
+    const htmlToTextPackage = require('html-to-text');
+    if (htmlToTextPackage && typeof htmlToTextPackage.htmlToText === 'function') {
+      const options = keepHyperlink
+        ? { wordwrap: 100 }
+        : {
+          wordwrap: 100,
+          selectors: [{ selector: 'a', options: { ignoreHref: true } }]
+        };
+      return htmlToTextPackage.htmlToText(html, options);
+    }
+  } catch (error) {
+    return fallbackConvert(html);
+  }
+
+  return fallbackConvert(html);
 }
 
 app.http('convert', {
   authLevel: 'anonymous',
   handler: async (request) => {
-    const htmlFromBody = await getHtmlFromBody(request);
-    const htmlFromQuery = request && request.query ? request.query.get('html') || '' : '';
-    const html = htmlFromBody || htmlFromQuery;
+    const bodyPayload = await getPayloadFromBody(request);
+    const queryPayload = getPayloadFromQuery(request);
+    const html = bodyPayload.html || queryPayload.html;
+    const keepHyperlink = parseBooleanish(
+      bodyPayload.hyperlink,
+      parseBooleanish(queryPayload.hyperlink, true)
+    );
 
     if (!html) {
       return {
         status: 400,
-        jsonBody: { error: 'Provide HTML in request body as { "html": "..." } or query ?html=...' }
+        jsonBody: { error: 'Provide HTML in request body as { "html": "..." } or { "body": "..." }, or query ?html=...&hyperlink=true|false' }
       };
     }
 
-    let text = '';
-    try {
-      const htmlToTextPackage = require('html-to-text');
-      if (htmlToTextPackage && typeof htmlToTextPackage.htmlToText === 'function') {
-        text = htmlToTextPackage.htmlToText(html, { wordwrap: 100 });
-      } else {
-        text = fallbackConvert(html);
-      }
-    } catch (error) {
-      text = fallbackConvert(html);
-    }
+    const text = convertWithOptions(html, keepHyperlink);
 
     return {
       status: 200,
