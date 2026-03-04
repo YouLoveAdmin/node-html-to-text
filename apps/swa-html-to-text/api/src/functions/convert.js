@@ -93,6 +93,8 @@ function convertWithOptions (html, keepHyperlink) {
 app.http('convert', {
   authLevel: 'anonymous',
   handler: async (request) => {
+    const missingHtmlError = 'Provide HTML in request body as { "html": "..." } or { "body": "..." }, '
+      + 'or query ?html=...&hyperlink=true|false';
     const bodyPayload = await getPayloadFromBody(request);
     const queryPayload = getPayloadFromQuery(request);
     const html = bodyPayload.html || queryPayload.html;
@@ -104,7 +106,7 @@ app.http('convert', {
     if (!html) {
       return {
         status: 400,
-        jsonBody: { error: 'Provide HTML in request body as { "html": "..." } or { "body": "..." }, or query ?html=...&hyperlink=true|false' }
+        jsonBody: { error: missingHtmlError }
       };
     }
 
