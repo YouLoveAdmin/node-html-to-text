@@ -29,7 +29,7 @@ function fallbackConvert (html) {
 async function getPayloadFromBody (request) {
   const payload = {
     html: '',
-    hyperlink: true
+    hyperlink: undefined
   };
 
   try {
@@ -50,7 +50,7 @@ async function getPayloadFromBody (request) {
         payload.html = rawBody;
       }
 
-      if (parsedBody && typeof parsedBody === 'object') {
+      if (parsedBody && typeof parsedBody === 'object' && Object.hasOwn(parsedBody, 'hyperlink')) {
         payload.hyperlink = parseBooleanish(parsedBody.hyperlink, true);
       }
     } catch (error) {
@@ -95,10 +95,9 @@ app.http('markdown', {
     const bodyPayload = await getPayloadFromBody(request);
     const queryPayload = getPayloadFromQuery(request);
     const html = bodyPayload.html || queryPayload.html;
-    const keepHyperlink = parseBooleanish(
-      bodyPayload.hyperlink,
-      parseBooleanish(queryPayload.hyperlink, true)
-    );
+    const keepHyperlink = (bodyPayload.hyperlink === undefined)
+      ? parseBooleanish(queryPayload.hyperlink, true)
+      : parseBooleanish(bodyPayload.hyperlink, true);
 
     if (!html) {
       return {
